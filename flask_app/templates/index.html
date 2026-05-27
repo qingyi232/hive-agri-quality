@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>农产品质量安全追溯与分析系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a5f2a 0%, #2d8a4e 100%);
+            min-height: 100vh;
+        }
+        .header {
+            background: rgba(0,0,0,0.3);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .header p {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        .nav {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            padding: 20px;
+            flex-wrap: wrap;
+        }
+        .nav a {
+            background: white;
+            color: #1a5f2a;
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .nav a:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+        .main-content {
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .search-box {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .search-box h2 {
+            color: #1a5f2a;
+            margin-bottom: 20px;
+        }
+        .search-box input {
+            width: 400px;
+            max-width: 100%;
+            padding: 15px 20px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+        }
+        .search-box input:focus {
+            border-color: #1a5f2a;
+        }
+        .search-box button {
+            padding: 15px 40px;
+            font-size: 16px;
+            background: #1a5f2a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .search-box button:hover {
+            background: #2d8a4e;
+        }
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .card h3 {
+            color: #1a5f2a;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #1a5f2a;
+        }
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+        .chart-container {
+            height: 300px;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: rgba(255,255,255,0.7);
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌾 农产品质量安全追溯与分析系统</h1>
+        <p>基于Hadoop + Hive + Spark大数据技术栈</p>
+    </div>
+
+    <div class="nav">
+        <a href="/consumer">🔍 消费者查询</a>
+        <a href="/enterprise">🏭 企业管理</a>
+        <a href="/supervisor">📋 监管部门</a>
+        <a href="/statistics">📊 数据统计</a>
+        <a href="/warning">⚠️ 风险预警</a>
+    </div>
+
+    <div class="main-content">
+        <div class="search-box">
+            <h2>追溯码查询</h2>
+            <input type="text" id="traceCode" placeholder="请输入农产品追溯码">
+            <button onclick="searchTrace()">查询</button>
+        </div>
+
+        <div class="dashboard">
+            <div class="card">
+                <h3>📦 今日数据概览</h3>
+                <div class="stat-number" id="totalProducts">--</div>
+                <div class="stat-label">累计追溯产品数</div>
+            </div>
+            <div class="card">
+                <h3>✅ 质量合格率</h3>
+                <div class="stat-number" id="qualifiedRate">--</div>
+                <div class="stat-label">整体合格率</div>
+            </div>
+            <div class="card">
+                <h3>📈 质量趋势</h3>
+                <div class="chart-container" id="trendChart"></div>
+            </div>
+            <div class="card">
+                <h3>🥧 各环节达标率</h3>
+                <div class="chart-container" id="pieChart"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>© 2025 农产品质量安全追溯与分析系统 | 技术支持：Hadoop + Hive + Spark + Flask + Echarts</p>
+    </div>
+
+    <script>
+        // 加载统计数据
+        fetch('/api/statistics/overview')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('totalProducts').textContent = data.total_products.toLocaleString();
+                document.getElementById('qualifiedRate').textContent = data.qualified_rate + '%';
+                
+                // 绘制饼图
+                var pieChart = echarts.init(document.getElementById('pieChart'));
+                pieChart.setOption({
+                    tooltip: { trigger: 'item' },
+                    series: [{
+                        type: 'pie',
+                        radius: ['40%', '70%'],
+                        data: [
+                            { value: data.planting_qualified_rate, name: '种植环节' },
+                            { value: data.processing_qualified_rate, name: '加工环节' },
+                            { value: data.transport_qualified_rate, name: '运输环节' },
+                            { value: data.sales_qualified_rate, name: '销售环节' }
+                        ],
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        }
+                    }]
+                });
+            });
+
+        // 加载趋势数据
+        fetch('/api/statistics/trend')
+            .then(res => res.json())
+            .then(data => {
+                var trendChart = echarts.init(document.getElementById('trendChart'));
+                trendChart.setOption({
+                    tooltip: { trigger: 'axis' },
+                    xAxis: {
+                        type: 'category',
+                        data: data.dates.map(d => d.slice(5))
+                    },
+                    yAxis: {
+                        type: 'value',
+                        min: 95,
+                        max: 100
+                    },
+                    series: [{
+                        data: data.qualified_rates,
+                        type: 'line',
+                        smooth: true,
+                        areaStyle: { color: 'rgba(26, 95, 42, 0.3)' },
+                        lineStyle: { color: '#1a5f2a' },
+                        itemStyle: { color: '#1a5f2a' }
+                    }]
+                });
+            });
+
+        // 追溯码查询
+        function searchTrace() {
+            var code = document.getElementById('traceCode').value.trim();
+            if (code) {
+                window.location.href = '/consumer?code=' + encodeURIComponent(code);
+            } else {
+                alert('请输入追溯码');
+            }
+        }
+
+        // 回车搜索
+        document.getElementById('traceCode').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') searchTrace();
+        });
+    </script>
+</body>
+</html>

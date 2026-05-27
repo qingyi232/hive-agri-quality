@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>消费者查询 - 农产品质量安全追溯系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a5f2a 0%, #2d8a4e 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 24px; }
+        .header a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        .search-section {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .search-section h2 {
+            color: #1a5f2a;
+            margin-bottom: 20px;
+        }
+        .search-form {
+            display: flex;
+            gap: 10px;
+        }
+        .search-form input {
+            flex: 1;
+            padding: 15px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+        .search-form button {
+            padding: 15px 40px;
+            background: #1a5f2a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .result-section {
+            display: none;
+        }
+        .result-section.show { display: block; }
+        .product-info {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .product-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .product-name {
+            font-size: 24px;
+            color: #1a5f2a;
+        }
+        .status-badge {
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .status-badge.qualified {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-badge.unqualified {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: #1a5f2a;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -26px;
+            top: 25px;
+            width: 15px;
+            height: 15px;
+            background: #1a5f2a;
+            border-radius: 50%;
+            border: 3px solid white;
+        }
+        .timeline-item.warning::before {
+            background: #ffc107;
+        }
+        .timeline-item.error::before {
+            background: #dc3545;
+        }
+        .timeline-title {
+            font-size: 18px;
+            color: #1a5f2a;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .timeline-content {
+            color: #666;
+            line-height: 1.8;
+        }
+        .timeline-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .timeline-content td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .timeline-content td:first-child {
+            color: #999;
+            width: 120px;
+        }
+        .chart-section {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .chart-section h3 {
+            color: #1a5f2a;
+            margin-bottom: 15px;
+        }
+        .chart-container {
+            height: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 消费者查询</h1>
+        <a href="/">返回首页</a>
+    </div>
+
+    <div class="container">
+        <div class="search-section">
+            <h2>输入追溯码查询农产品信息</h2>
+            <div class="search-form">
+                <input type="text" id="traceCode" placeholder="请输入16位追溯码，如：A1B2C3D4E5F6G7H8">
+                <button onclick="searchTrace()">查询</button>
+            </div>
+        </div>
+
+        <div class="result-section" id="resultSection">
+            <div class="product-info">
+                <div class="product-header">
+                    <div>
+                        <div class="product-name" id="productName">--</div>
+                        <div style="color:#666;margin-top:5px;">追溯码：<span id="displayCode">--</span></div>
+                    </div>
+                    <div class="status-badge qualified" id="statusBadge">质量合格</div>
+                </div>
+
+                <div class="timeline">
+                    <!-- 种植环节 -->
+                    <div class="timeline-item" id="plantingItem">
+                        <div class="timeline-title">🌱 种植环节 <span style="font-size:12px;color:#28a745;">✓ 合格</span></div>
+                        <div class="timeline-content" id="plantingContent"></div>
+                    </div>
+
+                    <!-- 加工环节 -->
+                    <div class="timeline-item" id="processingItem">
+                        <div class="timeline-title">🏭 加工环节 <span style="font-size:12px;color:#28a745;">✓ 合格</span></div>
+                        <div class="timeline-content" id="processingContent"></div>
+                    </div>
+
+                    <!-- 运输环节 -->
+                    <div class="timeline-item" id="transportItem">
+                        <div class="timeline-title">🚚 运输环节 <span style="font-size:12px;color:#28a745;">✓ 合格</span></div>
+                        <div class="timeline-content" id="transportContent"></div>
+                    </div>
+
+                    <!-- 销售环节 -->
+                    <div class="timeline-item" id="salesItem">
+                        <div class="timeline-title">🛒 销售环节 <span style="font-size:12px;color:#28a745;">✓ 合格</span></div>
+                        <div class="timeline-content" id="salesContent"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-section">
+                <h3>📈 运输温度监控</h3>
+                <div class="chart-container" id="tempChart"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 获取URL参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const codeFromUrl = urlParams.get('code');
+        if (codeFromUrl) {
+            document.getElementById('traceCode').value = codeFromUrl;
+            searchTrace();
+        }
+
+        function searchTrace() {
+            const code = document.getElementById('traceCode').value.trim();
+            if (!code) {
+                alert('请输入追溯码');
+                return;
+            }
+
+            fetch('/api/trace/' + encodeURIComponent(code))
+                .then(res => res.json())
+                .then(data => {
+                    displayResult(data);
+                })
+                .catch(err => {
+                    alert('查询失败，请稍后重试');
+                });
+        }
+
+        function displayResult(data) {
+            document.getElementById('resultSection').classList.add('show');
+            document.getElementById('productName').textContent = data.product_name;
+            document.getElementById('displayCode').textContent = data.trace_code;
+
+            // 种植信息
+            const planting = data.planting;
+            document.getElementById('plantingContent').innerHTML = `
+                <table>
+                    <tr><td>种植基地</td><td>${planting.farm}</td></tr>
+                    <tr><td>种植周期</td><td>${planting.start_date} 至 ${planting.end_date}</td></tr>
+                    <tr><td>土壤pH值</td><td>${planting.environment.soil_ph}</td></tr>
+                    <tr><td>温度范围</td><td>${planting.environment.temperature}</td></tr>
+                    <tr><td>施肥记录</td><td>${planting.fertilizer.map(f => f.name + ' ' + f.amount).join('、')}</td></tr>
+                    <tr><td>用药记录</td><td>${planting.pesticide.map(p => p.name + (p.compliant ? ' (合规)' : ' (不合规)')).join('、')}</td></tr>
+                </table>
+            `;
+
+            // 加工信息
+            const processing = data.processing;
+            document.getElementById('processingContent').innerHTML = `
+                <table>
+                    <tr><td>加工厂</td><td>${processing.factory}</td></tr>
+                    <tr><td>加工日期</td><td>${processing.date}</td></tr>
+                    <tr><td>加工工艺</td><td>${processing.process.join(' → ')}</td></tr>
+                    <tr><td>卫生评分</td><td>${processing.hygiene_score}分</td></tr>
+                </table>
+            `;
+
+            // 运输信息
+            const transport = data.transport;
+            document.getElementById('transportContent').innerHTML = `
+                <table>
+                    <tr><td>物流公司</td><td>${transport.company}</td></tr>
+                    <tr><td>运输周期</td><td>${transport.start_date} 至 ${transport.end_date}</td></tr>
+                    <tr><td>温度要求</td><td>${transport.temperature_range}</td></tr>
+                </table>
+            `;
+
+            // 销售信息
+            const sales = data.sales;
+            document.getElementById('salesContent').innerHTML = `
+                <table>
+                    <tr><td>销售渠道</td><td>${sales.channel}</td></tr>
+                    <tr><td>门店</td><td>${sales.store}</td></tr>
+                    <tr><td>上架日期</td><td>${sales.shelf_date}</td></tr>
+                    <tr><td>售价</td><td>${sales.price}</td></tr>
+                </table>
+            `;
+
+            // 绘制温度图表
+            const tempChart = echarts.init(document.getElementById('tempChart'));
+            tempChart.setOption({
+                tooltip: { trigger: 'axis' },
+                xAxis: {
+                    type: 'category',
+                    data: ['0h', '4h', '8h', '12h', '16h', '20h'],
+                    name: '运输时间'
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '温度(℃)',
+                    min: 0,
+                    max: 10
+                },
+                series: [{
+                    data: transport.actual_temperature,
+                    type: 'line',
+                    smooth: true,
+                    markArea: {
+                        data: [[
+                            { yAxis: 2, itemStyle: { color: 'rgba(40, 167, 69, 0.2)' } },
+                            { yAxis: 8 }
+                        ]]
+                    },
+                    lineStyle: { color: '#1a5f2a' },
+                    itemStyle: { color: '#1a5f2a' }
+                }]
+            });
+        }
+
+        document.getElementById('traceCode').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') searchTrace();
+        });
+    </script>
+</body>
+</html>

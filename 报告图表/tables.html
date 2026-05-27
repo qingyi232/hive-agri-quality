@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>论文表格</title>
+    <style>
+        body {
+            font-family: '宋体', SimSun, serif;
+            font-size: 12pt;
+            padding: 40px;
+            background: white;
+        }
+        .table-container {
+            margin-bottom: 60px;
+            page-break-after: always;
+        }
+        .table-title {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 12pt;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0 auto;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px 12px;
+            text-align: center;
+            font-size: 11pt;
+        }
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        .note {
+            font-size: 10pt;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 表3-1 系统非功能需求指标表 -->
+<div class="table-container">
+    <div class="table-title">表3-1 系统非功能需求指标表</div>
+    <table>
+        <tr>
+            <th>需求类型</th>
+            <th>具体指标</th>
+            <th>实现方式</th>
+        </tr>
+        <tr>
+            <td>稳定性</td>
+            <td>MTBF≥1000小时</td>
+            <td>Docker容器自动重启、故障隔离</td>
+        </tr>
+        <tr>
+            <td>安全性</td>
+            <td>网络隔离、权限控制</td>
+            <td>Docker网络、Hive权限</td>
+        </tr>
+        <tr>
+            <td>可扩展性</td>
+            <td>支持存储与计算节点扩容</td>
+            <td>分布式架构、标准化API</td>
+        </tr>
+        <tr>
+            <td>易用性</td>
+            <td>页面加载≤3秒，查询响应≤5秒</td>
+            <td>前端优化、缓存机制</td>
+        </tr>
+    </table>
+    <div class="note">注：表中指标为系统核心非功能需求，实际开发中可根据场景微调。</div>
+</div>
+
+<!-- 表4-1 产品基础信息表 -->
+<div class="table-container">
+    <div class="table-title">表4-1 产品基础信息表（product_info）</div>
+    <table>
+        <tr>
+            <th>字段名</th>
+            <th>字段类型</th>
+            <th>字段说明</th>
+        </tr>
+        <tr>
+            <td>product_id</td>
+            <td>STRING</td>
+            <td>产品ID（主键）</td>
+        </tr>
+        <tr>
+            <td>trace_code</td>
+            <td>STRING</td>
+            <td>追溯码（16位唯一标识）</td>
+        </tr>
+        <tr>
+            <td>product_name</td>
+            <td>STRING</td>
+            <td>产品名称</td>
+        </tr>
+        <tr>
+            <td>category</td>
+            <td>STRING</td>
+            <td>产品类别（蔬菜/水果/粮食）</td>
+        </tr>
+        <tr>
+            <td>batch_no</td>
+            <td>STRING</td>
+            <td>批次号</td>
+        </tr>
+        <tr>
+            <td>create_time</td>
+            <td>TIMESTAMP</td>
+            <td>创建时间</td>
+        </tr>
+        <tr>
+            <td>overall_qualified</td>
+            <td>BOOLEAN</td>
+            <td>整体是否合格</td>
+        </tr>
+    </table>
+</div>
+
+<!-- 表4-2 种植环节数据表 -->
+<div class="table-container">
+    <div class="table-title">表4-2 种植环节数据表（planting_data）</div>
+    <table>
+        <tr>
+            <th>字段名</th>
+            <th>字段类型</th>
+            <th>字段说明</th>
+        </tr>
+        <tr>
+            <td>record_id</td>
+            <td>STRING</td>
+            <td>记录ID（主键）</td>
+        </tr>
+        <tr>
+            <td>product_id</td>
+            <td>STRING</td>
+            <td>产品ID（外键）</td>
+        </tr>
+        <tr>
+            <td>farm_name</td>
+            <td>STRING</td>
+            <td>种植基地名称</td>
+        </tr>
+        <tr>
+            <td>farm_location</td>
+            <td>STRING</td>
+            <td>基地位置</td>
+        </tr>
+        <tr>
+            <td>start_date</td>
+            <td>DATE</td>
+            <td>种植开始日期</td>
+        </tr>
+        <tr>
+            <td>end_date</td>
+            <td>DATE</td>
+            <td>种植结束日期</td>
+        </tr>
+        <tr>
+            <td>soil_ph</td>
+            <td>DECIMAL(3,1)</td>
+            <td>土壤pH值</td>
+        </tr>
+        <tr>
+            <td>temperature_range</td>
+            <td>STRING</td>
+            <td>温度范围</td>
+        </tr>
+        <tr>
+            <td>humidity_range</td>
+            <td>STRING</td>
+            <td>湿度范围</td>
+        </tr>
+        <tr>
+            <td>qualified</td>
+            <td>BOOLEAN</td>
+            <td>是否合格</td>
+        </tr>
+    </table>
+</div>
+
+<!-- 表4-3 用药记录表 -->
+<div class="table-container">
+    <div class="table-title">表4-3 用药记录表（pesticide_record）</div>
+    <table>
+        <tr>
+            <th>字段名</th>
+            <th>字段类型</th>
+            <th>字段说明</th>
+        </tr>
+        <tr>
+            <td>record_id</td>
+            <td>STRING</td>
+            <td>记录ID（主键）</td>
+        </tr>
+        <tr>
+            <td>product_id</td>
+            <td>STRING</td>
+            <td>产品ID（外键）</td>
+        </tr>
+        <tr>
+            <td>pesticide_name</td>
+            <td>STRING</td>
+            <td>农药名称</td>
+        </tr>
+        <tr>
+            <td>pesticide_type</td>
+            <td>STRING</td>
+            <td>农药类型</td>
+        </tr>
+        <tr>
+            <td>amount</td>
+            <td>STRING</td>
+            <td>用量</td>
+        </tr>
+        <tr>
+            <td>apply_date</td>
+            <td>DATE</td>
+            <td>用药日期</td>
+        </tr>
+        <tr>
+            <td>safety_interval</td>
+            <td>INT</td>
+            <td>安全间隔期（天）</td>
+        </tr>
+        <tr>
+            <td>compliant</td>
+            <td>BOOLEAN</td>
+            <td>是否合规</td>
+        </tr>
+    </table>
+</div>
+
+<!-- 表6-1 核心功能测试结果表 -->
+<div class="table-container">
+    <div class="table-title">表6-1 核心功能测试结果表</div>
+    <table>
+        <tr>
+            <th>测试模块</th>
+            <th>测试用例数</th>
+            <th>通过数</th>
+            <th>失败数</th>
+            <th>通过率</th>
+        </tr>
+        <tr>
+            <td>数据采集模块</td>
+            <td>25</td>
+            <td>24</td>
+            <td>1</td>
+            <td>96.0%</td>
+        </tr>
+        <tr>
+            <td>追溯查询模块</td>
+            <td>22</td>
+            <td>22</td>
+            <td>0</td>
+            <td>100%</td>
+        </tr>
+        <tr>
+            <td>数据分析模块</td>
+            <td>20</td>
+            <td>19</td>
+            <td>1</td>
+            <td>95.0%</td>
+        </tr>
+        <tr>
+            <td>风险预警模块</td>
+            <td>15</td>
+            <td>15</td>
+            <td>0</td>
+            <td>100%</td>
+        </tr>
+        <tr>
+            <td>数据统计模块</td>
+            <td>10</td>
+            <td>10</td>
+            <td>0</td>
+            <td>100%</td>
+        </tr>
+        <tr>
+            <td><strong>总计</strong></td>
+            <td><strong>92</strong></td>
+            <td><strong>90</strong></td>
+            <td><strong>2</strong></td>
+            <td><strong>97.8%</strong></td>
+        </tr>
+    </table>
+</div>
+
+<!-- 表6-2 并发访问测试结果表 -->
+<div class="table-container">
+    <div class="table-title">表6-2 并发访问测试结果表</div>
+    <table>
+        <tr>
+            <th>并发用户数</th>
+            <th>平均响应时间（秒）</th>
+            <th>95%响应时间（秒）</th>
+            <th>TPS</th>
+            <th>错误率</th>
+            <th>是否达标</th>
+        </tr>
+        <tr>
+            <td>100</td>
+            <td>0.8</td>
+            <td>1.2</td>
+            <td>125</td>
+            <td>0%</td>
+            <td>是</td>
+        </tr>
+        <tr>
+            <td>300</td>
+            <td>1.5</td>
+            <td>2.1</td>
+            <td>200</td>
+            <td>0%</td>
+            <td>是</td>
+        </tr>
+        <tr>
+            <td>500</td>
+            <td>2.8</td>
+            <td>3.5</td>
+            <td>178</td>
+            <td>0.2%</td>
+            <td>是</td>
+        </tr>
+        <tr>
+            <td>800</td>
+            <td>4.2</td>
+            <td>5.0</td>
+            <td>190</td>
+            <td>0.5%</td>
+            <td>是</td>
+        </tr>
+    </table>
+</div>
+
+<!-- 表6-3 兼容性测试结果表 -->
+<div class="table-container">
+    <div class="table-title">表6-3 兼容性测试结果表</div>
+    <table>
+        <tr>
+            <th>测试环境</th>
+            <th>版本/规格</th>
+            <th>功能完整性</th>
+            <th>页面适配性</th>
+            <th>是否达标</th>
+        </tr>
+        <tr>
+            <td>Chrome浏览器</td>
+            <td>110+</td>
+            <td>100%</td>
+            <td>完美适配</td>
+            <td>是</td>
+        </tr>
+        <tr>
+            <td>Edge浏览器</td>
+            <td>110+</td>
+            <td>100%</td>
+            <td>完美适配</td>
+            <td>是</td>
+        </tr>
+        <tr>
+            <td>Firefox浏览器</td>
+            <td>105+</td>
+            <td>100%</td>
+            <td>完美适配</td>
+            <td>是</td>
+        </tr>
+        <tr>
+            <td>移动端（手机）</td>
+            <td>iOS/Android</td>
+            <td>100%</td>
+            <td>响应式适配</td>
+            <td>是</td>
+        </tr>
+    </table>
+</div>
+
+</body>
+</html>

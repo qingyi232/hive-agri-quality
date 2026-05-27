@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据统计 - 农产品质量安全追溯系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a5f2a 0%, #2d8a4e 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 24px; }
+        .header a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .stat-card .icon { font-size: 40px; margin-bottom: 10px; }
+        .stat-card .number { font-size: 32px; font-weight: bold; color: #1a5f2a; }
+        .stat-card .label { color: #666; margin-top: 5px; }
+        .chart-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .panel {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .panel h2 {
+            color: #1a5f2a;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        .chart-container { height: 350px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; color: #1a5f2a; }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #eee;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-bar .fill {
+            height: 100%;
+            background: #1a5f2a;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 数据统计</h1>
+        <a href="/">返回首页</a>
+    </div>
+
+    <div class="container">
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="icon">📦</div>
+                <div class="number" id="totalProducts">--</div>
+                <div class="label">累计追溯产品</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">✅</div>
+                <div class="number" id="qualifiedRate">--</div>
+                <div class="label">整体合格率</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">🏭</div>
+                <div class="number" id="enterpriseCount">--</div>
+                <div class="label">入驻企业</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">⚠️</div>
+                <div class="number" id="warningCount">--</div>
+                <div class="label">预警记录数</div>
+            </div>
+        </div>
+
+        <div class="chart-row">
+            <div class="panel">
+                <h2>📈 质量趋势</h2>
+                <div class="chart-container" id="trendChart"></div>
+            </div>
+            <div class="panel">
+                <h2>🥧 产品类别分布</h2>
+                <div class="chart-container" id="categoryChart"></div>
+            </div>
+        </div>
+
+        <div class="chart-row">
+            <div class="panel">
+                <h2>📊 各环节质量达标率</h2>
+                <div class="chart-container" id="stageChart"></div>
+            </div>
+            <div class="panel">
+                <h2>🗺️ 产地分布</h2>
+                <div class="chart-container" id="originChart"></div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>🏆 企业质量排行榜（基于真实数据）</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>排名</th>
+                        <th>企业名称</th>
+                        <th>产品数量</th>
+                        <th>合格率</th>
+                        <th>合格率进度</th>
+                    </tr>
+                </thead>
+                <tbody id="rankingTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // 加载统计概览数据
+        fetch('/api/statistics/overview')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('totalProducts').textContent = data.total_products.toLocaleString();
+                document.getElementById('qualifiedRate').textContent = data.qualified_rate + '%';
+                
+                // 各环节达标率雷达图
+                var stageChart = echarts.init(document.getElementById('stageChart'));
+                stageChart.setOption({
+                    tooltip: { trigger: 'item' },
+                    radar: {
+                        indicator: [
+                            { name: '种植环节', max: 100 },
+                            { name: '加工环节', max: 100 },
+                            { name: '运输环节', max: 100 },
+                            { name: '销售环节', max: 100 }
+                        ]
+                    },
+                    series: [{
+                        type: 'radar',
+                        data: [{
+                            value: [
+                                data.planting_qualified_rate,
+                                data.processing_qualified_rate,
+                                data.transport_qualified_rate,
+                                data.sales_qualified_rate
+                            ],
+                            name: '达标率',
+                            areaStyle: { color: 'rgba(26, 95, 42, 0.3)' },
+                            lineStyle: { color: '#1a5f2a' },
+                            itemStyle: { color: '#1a5f2a' }
+                        }]
+                    }]
+                });
+            });
+
+        // 加载趋势数据
+        fetch('/api/statistics/trend')
+            .then(res => res.json())
+            .then(data => {
+                var trendChart = echarts.init(document.getElementById('trendChart'));
+                trendChart.setOption({
+                    tooltip: { trigger: 'axis' },
+                    xAxis: {
+                        type: 'category',
+                        data: data.dates.map(d => d.slice(5))
+                    },
+                    yAxis: { type: 'value', min: 90, max: 100 },
+                    series: [{
+                        data: data.qualified_rates,
+                        type: 'line',
+                        smooth: true,
+                        areaStyle: { color: 'rgba(26, 95, 42, 0.3)' },
+                        lineStyle: { color: '#1a5f2a' },
+                        itemStyle: { color: '#1a5f2a' }
+                    }]
+                });
+            });
+
+        // 加载类别分布
+        fetch('/api/statistics/category')
+            .then(res => res.json())
+            .then(data => {
+                var categoryChart = echarts.init(document.getElementById('categoryChart'));
+                categoryChart.setOption({
+                    tooltip: { trigger: 'item' },
+                    legend: { orient: 'vertical', left: 'left' },
+                    series: [{
+                        type: 'pie',
+                        radius: '60%',
+                        data: data
+                    }]
+                });
+            });
+
+        // 加载产地分布
+        fetch('/api/statistics/region')
+            .then(res => res.json())
+            .then(data => {
+                var originChart = echarts.init(document.getElementById('originChart'));
+                originChart.setOption({
+                    tooltip: { trigger: 'axis' },
+                    xAxis: { type: 'value' },
+                    yAxis: {
+                        type: 'category',
+                        data: data.map(d => d.name)
+                    },
+                    series: [{
+                        type: 'bar',
+                        data: data.map(d => d.value),
+                        itemStyle: { color: '#1a5f2a' }
+                    }]
+                });
+            });
+
+        // 加载企业排行
+        fetch('/api/statistics/enterprise_ranking')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('enterpriseCount').textContent = data.length;
+                const medals = ['🥇', '🥈', '🥉'];
+                const tbody = document.getElementById('rankingTable');
+                tbody.innerHTML = data.map((e, i) => `
+                    <tr>
+                        <td>${i < 3 ? medals[i] : ''} ${i + 1}</td>
+                        <td>${e.name}</td>
+                        <td>${e.count}</td>
+                        <td>${e.qualified_rate}%</td>
+                        <td><div class="progress-bar"><div class="fill" style="width:${e.qualified_rate}%"></div></div></td>
+                    </tr>
+                `).join('');
+            });
+
+        // 加载预警统计
+        fetch('/api/warning/statistics')
+            .then(res => res.json())
+            .then(data => {
+                const total = data.level_stats.high + data.level_stats.medium + data.level_stats.low;
+                document.getElementById('warningCount').textContent = total;
+            });
+    </script>
+</body>
+</html>

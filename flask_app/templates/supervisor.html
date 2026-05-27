@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>监管部门 - 农产品质量安全追溯系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a5f2a 0%, #2d8a4e 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 24px; }
+        .header a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-card .number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #1a5f2a;
+        }
+        .stat-card .label {
+            color: #666;
+            margin-top: 5px;
+        }
+        .stat-card.warning .number { color: #ffc107; }
+        .stat-card.danger .number { color: #dc3545; }
+        .panel {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .panel h2 {
+            color: #1a5f2a;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        .chart-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+        .chart-container {
+            height: 350px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #f8f9fa;
+            color: #1a5f2a;
+        }
+        .level-tag {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        .level-tag.high { background: #f8d7da; color: #721c24; }
+        .level-tag.medium { background: #fff3cd; color: #856404; }
+        .level-tag.low { background: #d4edda; color: #155724; }
+        .filter-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .filter-bar select, .filter-bar input {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        .filter-bar button {
+            padding: 10px 20px;
+            background: #1a5f2a;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 监管部门监督</h1>
+        <a href="/">返回首页</a>
+    </div>
+
+    <div class="container">
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="number">15,680</div>
+                <div class="label">监管产品总数</div>
+            </div>
+            <div class="stat-card">
+                <div class="number">98.5%</div>
+                <div class="label">整体合格率</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="number">12</div>
+                <div class="label">待处理预警</div>
+            </div>
+            <div class="stat-card danger">
+                <div class="number">3</div>
+                <div class="label">高风险事件</div>
+            </div>
+        </div>
+
+        <div class="chart-row">
+            <div class="panel">
+                <h2>📊 各地区合格率分布</h2>
+                <div class="chart-container" id="regionChart"></div>
+            </div>
+            <div class="panel">
+                <h2>📈 近30天质量趋势</h2>
+                <div class="chart-container" id="trendChart"></div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>⚠️ 风险事件列表</h2>
+            <div class="filter-bar">
+                <select>
+                    <option value="">全部级别</option>
+                    <option value="high">高风险</option>
+                    <option value="medium">中风险</option>
+                    <option value="low">低风险</option>
+                </select>
+                <select>
+                    <option value="">全部类型</option>
+                    <option value="pesticide">农药残留</option>
+                    <option value="temperature">温度异常</option>
+                    <option value="hygiene">卫生问题</option>
+                </select>
+                <input type="date" placeholder="开始日期">
+                <input type="date" placeholder="结束日期">
+                <button>筛选</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>风险级别</th>
+                        <th>类型</th>
+                        <th>产品</th>
+                        <th>批次</th>
+                        <th>问题环节</th>
+                        <th>发现时间</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="warningTable"></tbody>
+            </table>
+        </div>
+
+        <div class="chart-row">
+            <div class="panel">
+                <h2>🥧 问题类型分布</h2>
+                <div class="chart-container" id="typeChart"></div>
+            </div>
+            <div class="panel">
+                <h2>📍 问题环节分布</h2>
+                <div class="chart-container" id="stageChart"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 加载预警列表
+        fetch('/api/warning/list')
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById('warningTable');
+                tbody.innerHTML = data.map(w => `
+                    <tr>
+                        <td><span class="level-tag ${w.level}">${w.level === 'high' ? '高' : w.level === 'medium' ? '中' : '低'}</span></td>
+                        <td>${w.type}</td>
+                        <td>${w.product}</td>
+                        <td>${w.batch}</td>
+                        <td>${w.location}</td>
+                        <td>${w.time}</td>
+                        <td>${w.status === 'pending' ? '待处理' : '处理中'}</td>
+                        <td><a href="#" style="color:#1a5f2a;">详情</a></td>
+                    </tr>
+                `).join('');
+            });
+
+        // 地区合格率图表
+        var regionChart = echarts.init(document.getElementById('regionChart'));
+        regionChart.setOption({
+            tooltip: { trigger: 'axis' },
+            xAxis: {
+                type: 'category',
+                data: ['山东', '河北', '河南', '江苏', '浙江', '广东', '四川']
+            },
+            yAxis: { type: 'value', min: 90, max: 100 },
+            series: [{
+                data: [99.2, 98.5, 97.8, 98.9, 99.1, 98.3, 97.5],
+                type: 'bar',
+                itemStyle: { color: '#1a5f2a' }
+            }]
+        });
+
+        // 趋势图表
+        var trendChart = echarts.init(document.getElementById('trendChart'));
+        var dates = [];
+        var values = [];
+        for (var i = 30; i >= 0; i--) {
+            var d = new Date();
+            d.setDate(d.getDate() - i);
+            dates.push((d.getMonth() + 1) + '/' + d.getDate());
+            values.push((97 + Math.random() * 2.5).toFixed(1));
+        }
+        trendChart.setOption({
+            tooltip: { trigger: 'axis' },
+            xAxis: { type: 'category', data: dates },
+            yAxis: { type: 'value', min: 95, max: 100 },
+            series: [{
+                data: values,
+                type: 'line',
+                smooth: true,
+                areaStyle: { color: 'rgba(26, 95, 42, 0.2)' },
+                lineStyle: { color: '#1a5f2a' }
+            }]
+        });
+
+        // 问题类型饼图
+        var typeChart = echarts.init(document.getElementById('typeChart'));
+        typeChart.setOption({
+            tooltip: { trigger: 'item' },
+            series: [{
+                type: 'pie',
+                radius: ['40%', '70%'],
+                data: [
+                    { value: 35, name: '农药残留' },
+                    { value: 25, name: '温度异常' },
+                    { value: 20, name: '卫生问题' },
+                    { value: 15, name: '标签不符' },
+                    { value: 5, name: '其他' }
+                ]
+            }]
+        });
+
+        // 问题环节饼图
+        var stageChart = echarts.init(document.getElementById('stageChart'));
+        stageChart.setOption({
+            tooltip: { trigger: 'item' },
+            series: [{
+                type: 'pie',
+                radius: ['40%', '70%'],
+                data: [
+                    { value: 40, name: '种植环节' },
+                    { value: 25, name: '加工环节' },
+                    { value: 25, name: '运输环节' },
+                    { value: 10, name: '销售环节' }
+                ]
+            }]
+        });
+    </script>
+</body>
+</html>

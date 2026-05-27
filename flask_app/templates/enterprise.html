@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>企业管理 - 农产品质量安全追溯系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a5f2a 0%, #2d8a4e 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 24px; }
+        .header a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 12px 24px;
+            background: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .tab.active {
+            background: #1a5f2a;
+            color: white;
+        }
+        .panel {
+            display: none;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .panel.active { display: block; }
+        .panel h2 {
+            color: #1a5f2a;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: bold;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        .btn {
+            padding: 12px 30px;
+            background: #1a5f2a;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn:hover { background: #2d8a4e; }
+        .btn-secondary {
+            background: #6c757d;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #f8f9fa;
+            color: #1a5f2a;
+        }
+        .status-tag {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        .status-tag.success { background: #d4edda; color: #155724; }
+        .status-tag.pending { background: #fff3cd; color: #856404; }
+        .trace-code-result {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+        }
+        .trace-code-result.show { display: block; }
+        .trace-code-display {
+            font-size: 32px;
+            font-family: monospace;
+            color: #1a5f2a;
+            letter-spacing: 3px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏭 企业管理</h1>
+        <a href="/">返回首页</a>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('products')">产品管理</button>
+            <button class="tab" onclick="showTab('trace')">追溯码生成</button>
+            <button class="tab" onclick="showTab('data')">数据录入</button>
+        </div>
+
+        <!-- 产品管理 -->
+        <div class="panel active" id="panel-products">
+            <h2>📦 产品列表</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>产品名称</th>
+                        <th>类别</th>
+                        <th>产地</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="productTable"></tbody>
+            </table>
+        </div>
+
+        <!-- 追溯码生成 -->
+        <div class="panel" id="panel-trace">
+            <h2>🔖 生成追溯码</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>产品名称</label>
+                    <input type="text" id="gen_product_name" placeholder="如：有机番茄">
+                </div>
+                <div class="form-group">
+                    <label>批次号</label>
+                    <input type="text" id="gen_batch" placeholder="如：20251231001">
+                </div>
+            </div>
+            <button class="btn" onclick="generateTraceCode()">生成追溯码</button>
+
+            <div class="trace-code-result" id="traceResult">
+                <div>追溯码已生成</div>
+                <div class="trace-code-display" id="generatedCode">--</div>
+                <div style="color:#666;font-size:14px;">生成时间：<span id="generatedTime">--</span></div>
+                <button class="btn" style="margin-top:15px;" onclick="copyCode()">复制追溯码</button>
+            </div>
+        </div>
+
+        <!-- 数据录入 -->
+        <div class="panel" id="panel-data">
+            <h2>📝 数据录入</h2>
+            
+            <h3 style="color:#1a5f2a;margin:20px 0 15px;">种植环节数据</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>种植基地</label>
+                    <input type="text" placeholder="如：山东寿光绿色农场">
+                </div>
+                <div class="form-group">
+                    <label>种植开始日期</label>
+                    <input type="date">
+                </div>
+                <div class="form-group">
+                    <label>种植结束日期</label>
+                    <input type="date">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>土壤pH值</label>
+                    <input type="number" step="0.1" placeholder="如：6.8">
+                </div>
+                <div class="form-group">
+                    <label>温度范围</label>
+                    <input type="text" placeholder="如：15-28℃">
+                </div>
+                <div class="form-group">
+                    <label>湿度范围</label>
+                    <input type="text" placeholder="如：60-80%">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>施肥记录</label>
+                <textarea rows="3" placeholder="如：2025-09-15 有机肥 500kg/亩"></textarea>
+            </div>
+            <div class="form-group">
+                <label>用药记录</label>
+                <textarea rows="3" placeholder="如：2025-10-20 生物农药-苦参碱 100ml/亩"></textarea>
+            </div>
+
+            <h3 style="color:#1a5f2a;margin:20px 0 15px;">加工环节数据</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>加工厂</label>
+                    <input type="text" placeholder="如：寿光蔬菜加工厂">
+                </div>
+                <div class="form-group">
+                    <label>加工日期</label>
+                    <input type="date">
+                </div>
+                <div class="form-group">
+                    <label>卫生评分</label>
+                    <input type="number" placeholder="如：98">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>加工工艺</label>
+                <input type="text" placeholder="如：清洗、分拣、包装">
+            </div>
+
+            <h3 style="color:#1a5f2a;margin:20px 0 15px;">运输环节数据</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>物流公司</label>
+                    <input type="text" placeholder="如：顺丰冷链物流">
+                </div>
+                <div class="form-group">
+                    <label>运输开始日期</label>
+                    <input type="date">
+                </div>
+                <div class="form-group">
+                    <label>运输结束日期</label>
+                    <input type="date">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>温度要求</label>
+                <input type="text" placeholder="如：2-8℃">
+            </div>
+
+            <h3 style="color:#1a5f2a;margin:20px 0 15px;">销售环节数据</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>销售渠道</label>
+                    <input type="text" placeholder="如：盒马鲜生">
+                </div>
+                <div class="form-group">
+                    <label>门店</label>
+                    <input type="text" placeholder="如：北京朝阳店">
+                </div>
+                <div class="form-group">
+                    <label>上架日期</label>
+                    <input type="date">
+                </div>
+                <div class="form-group">
+                    <label>售价</label>
+                    <input type="text" placeholder="如：12.8元/斤">
+                </div>
+            </div>
+
+            <div style="margin-top:20px;">
+                <button class="btn">保存数据</button>
+                <button class="btn btn-secondary" style="margin-left:10px;">重置</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 加载产品列表
+        fetch('/api/products/list')
+            .then(res => res.json())
+            .then(data => {
+                const tbody = document.getElementById('productTable');
+                tbody.innerHTML = data.map(p => `
+                    <tr>
+                        <td>${p.name}</td>
+                        <td>${p.category}</td>
+                        <td>${p.origin}</td>
+                        <td><span class="status-tag ${p.status === '合格' ? 'success' : 'pending'}">${p.status}</span></td>
+                        <td><a href="/consumer?code=DEMO${p.id}" style="color:#1a5f2a;">查看追溯</a></td>
+                    </tr>
+                `).join('');
+            });
+
+        function showTab(name) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('panel-' + name).classList.add('active');
+        }
+
+        function generateTraceCode() {
+            const productName = document.getElementById('gen_product_name').value;
+            const batch = document.getElementById('gen_batch').value;
+            
+            if (!productName || !batch) {
+                alert('请填写产品名称和批次号');
+                return;
+            }
+
+            fetch('/api/generate_trace_code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ product_name: productName, batch: batch })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('generatedCode').textContent = data.trace_code;
+                document.getElementById('generatedTime').textContent = data.generated_time;
+                document.getElementById('traceResult').classList.add('show');
+            });
+        }
+
+        function copyCode() {
+            const code = document.getElementById('generatedCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                alert('追溯码已复制到剪贴板');
+            });
+        }
+    </script>
+</body>
+</html>
